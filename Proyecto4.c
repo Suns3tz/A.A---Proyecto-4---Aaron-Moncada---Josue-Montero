@@ -17,9 +17,7 @@ long countC(FILE* archivo){
 void writeCompressionTable(const char* originalFileName, long originalSize, long compressedSize) {
     double compressionPercentage = 100.0 * (1 - ((double)compressedSize / originalSize));
 
-    printf("---------------------------------------------------\n");
-    printf("| File Name         | Original Size | Compressed Size | Compression |\n");
-    printf("---------------------------------------------------\n");
+    
     printf("| %-18s | %-13ld | %-15ld | %7.2f%%   |\n", 
             originalFileName, originalSize, compressedSize, compressionPercentage);
     printf("---------------------------------------------------\n");
@@ -46,8 +44,7 @@ void changeExtention(const char* OgName, char* NewName){
     strcat(NewName, ".huff");
 }
 
-
-void writeCompressed(FILE* inFile, FILE* outFile) {
+void Compress(FILE* inFile, FILE* outFile) {
     int bitBuffer = 0;  
     int bitCount = 0;   
     int currentByte;
@@ -107,13 +104,17 @@ int main(int argc, char* argv[]){
 
         rewind(IN);
 
-        writeCompressed(IN, OUT);
+        Compress(IN, OUT);
 
         long newSize = countC(OUT);
 
         
 
-    
+        if ( i == 1){
+            printf("---------------------------------------------------\n");
+            printf("| File Name         | Original Size | Compressed Size | Compression |\n");
+            printf("---------------------------------------------------\n");
+        }
         fclose(IN);
         fclose(OUT);
         writeCompressionTable(OgName, originalSize, newSize);
