@@ -5,6 +5,8 @@
 #define MAX_TREE_HT 100
 #define DEFAULT_MAX_SIZE 1024
 
+char* HuffmanCodesArray[256];
+
 unsigned char simbolos[256] = {0};
 int ASCIIcount[256] = {0};
 int FreqSum = 0;
@@ -161,6 +163,15 @@ void printArr(int arr[], int n, FILE* Huffman) {
 
 int esPrimera = 1;
 
+void storeCode(int arr[], int n, unsigned char symbol) {
+    char* code = (char*)malloc(n + 1); 
+    for (int i = 0; i < n; ++i) {
+        code[i] = '0' + arr[i]; 
+    }
+    code[n] = '\0'; 
+    HuffmanCodesArray[symbol] = code; 
+}
+
 void tablaHuffman(FILE* Huffman, MinHeapNode* root, int arr[], int top) { // Hace la tabla
 
     if (root->left) { 
@@ -172,13 +183,7 @@ void tablaHuffman(FILE* Huffman, MinHeapNode* root, int arr[], int top) { // Hac
         tablaHuffman(Huffman, root->right, arr, top + 1); 
     } 
     if (isLeaf(root)) { 
-        fprintf(Huffman, "\n");
-        if (root->data >= 32 && root->data <= 126) {
-            fprintf(Huffman, "0x%02X | %c               = ", root->data, root->data);
-        } else {
-            fprintf(Huffman, "0x%02X | <non-printable> = ", root->data);
-        }
-        printArr(arr, top, Huffman); 
+        storeCode(arr, top, root->data); // Almacenamos el código
     } 
 }
 int internalCount = 0;
@@ -194,17 +199,32 @@ void guardarArbol(FILE* file, MinHeapNode* root) {
 
     guardarArbol(file, root->left);
     guardarArbol(file, root->right);
+
+    
+
 }
 
 void HuffmanCodes(int size, FILE *HUFFMAN, FILE *HuffmanTree) {  
     MinHeapNode* root = buildHuffmanTree(size); 
 
-    printSim();
+  
     // El tamaño de este array está sujeto a la altura del árbol, por lo que hay que calcular más o menos cual sería un número al que nunca llegaría
     int arr[300], top = 0; 
     
     guardarArbol(HuffmanTree, root);
-    tablaHuffman(HUFFMAN, root, arr, top); 
+    tablaHuffman(HUFFMAN, root, arr, top);
+
+    fprintf(HUFFMAN, "#ifndef HUFFMAN_CODES_H\n#define HUFFMAN_CODES_H\n\n");
+    fprintf(HUFFMAN, "const char* huffmanCodes[256] = {\n");
+    for (int i = 0; i < 256; ++i) {
+        if (HuffmanCodesArray[i] != NULL) {
+            fprintf(HUFFMAN, "    [0x%02X] = \"%s\",\n", i, HuffmanCodesArray[i]);
+        } else {
+            fprintf(HUFFMAN, "    [0x%02X] = NULL,\n", i); // En caso de que no haya código
+        }
+    }
+    fprintf(HUFFMAN, "};\n\n#endif\n");
+
 }
 
 void for2 () {
