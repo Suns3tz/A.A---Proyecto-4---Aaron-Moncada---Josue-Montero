@@ -188,6 +188,7 @@ void tablaHuffman(FILE* Huffman, MinHeapNode* root, int arr[], int top) { // Hac
 }
 int internalCount = 0;
 
+/*
 void guardarArbol(FILE* file, MinHeapNode* root) {
     if (root == NULL) return;
 
@@ -202,6 +203,28 @@ void guardarArbol(FILE* file, MinHeapNode* root) {
 
     
 
+}
+*/
+
+int esPrimera2 = 1;
+void guardarArbol(FILE* file, MinHeapNode* root) {
+    if (esPrimera2) { 
+        fprintf(file, "#ifndef HUFFMAN_TREE_H\n#define HUFFMAN_TREE_H\n\n");
+        fprintf(file, "typedef struct TreeNode {\n    char symbol;\n   } TreeNode;\n\n");
+        fprintf(file, "const TreeNode huffmanTreeNodes[] = {\n");
+        esPrimera2 = 0;
+    }
+
+    if (root == NULL) return;
+    
+    if (isLeaf(root)) {
+        fprintf(file, "    {'0x%02X'}, \n", root->data);
+    } else { 
+        fprintf(file, "    {'$'}, \n");
+    }
+
+    guardarArbol(file, root->left);
+    guardarArbol(file, root->right);
 }
 
 void HuffmanCodes(int size, FILE *HUFFMAN, FILE *HuffmanTree) {  
@@ -286,6 +309,8 @@ int main(int argc, char* argv[]){
     for2();
     
     HuffmanCodes(size,HUFFMAN_CODES, HUFFMAN_TREE);
+
+    fprintf(HUFFMAN_TREE, "};\n\n#endif\n");
 
     fclose(HUFFMAN_CODES);
     fclose(HUFFMAN_TREE);
