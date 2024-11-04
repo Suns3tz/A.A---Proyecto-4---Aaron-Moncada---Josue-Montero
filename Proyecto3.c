@@ -7,6 +7,8 @@
 
 char* HuffmanCodesArray[256];
 
+unsigned char Arbol[1000] = {'\0'};
+
 unsigned char simbolos[256] = {0};
 int ASCIIcount[256] = {0};
 int FreqSum = 0;
@@ -31,6 +33,11 @@ typedef struct MinHeap {
     unsigned size;
     unsigned capacity;
 } MinHeap;
+
+typedef struct StackNode {
+    MinHeapNode* treeNode;
+    struct StackNode* next;
+} StackNode;
 
 MinHeapNode* newNode(unsigned char data, int freq) {
     MinHeapNode* temp = (MinHeapNode*)malloc(sizeof(MinHeapNode));
@@ -131,10 +138,21 @@ MinHeapNode* buildHuffmanTree(int size) {
     return extractMin(minHeap);
 }
 
+void printHuffmanTree(MinHeapNode* root, int level) {
+    if (root != NULL) {
+        for (int i = 0; i < level; i++) printf("   ");  // Indentación para visualizar el nivel
+        printf("(%c, %d)\n", root->data, root->frequency);
+        printHuffmanTree(root->left, level + 1);
+        printHuffmanTree(root->right, level + 1);
+    }
+}
+
 // Funciones de manejo de archivos
 void extraerfreq(FILE* Freq) { // Extrae las frecuencias guardadas en la tabla de frecuencias
     char linea[100];
     int valor_hex, frecuencia;
+
+    rewind(Freq);
 
     fgets(linea, sizeof(linea), Freq);
     fgets(linea, sizeof(linea), Freq);
@@ -184,57 +202,93 @@ void tablaHuffman(FILE* Huffman, MinHeapNode* root, int arr[], int top) { // Hac
     } 
     if (isLeaf(root)) { 
         storeCode(arr, top, root->data); // Almacenamos el código
+        //printf("Símbolo: %c \n", root->data);
     } 
 }
 int internalCount = 0;
 
-/*
-void guardarArbol(FILE* file, MinHeapNode* root) {
-    if (root == NULL) return;
-
-    if (isLeaf(root)) {
-        fprintf(file, "#define NODE_0x%02X { '0x%02X', %d }\n", root->data, root->data, root->frequency);
-    } else {
-        fprintf(file, "#define NODE_INTERNAL%d { '$', %d }\n", ++internalCount, root->frequency);
-    }
-
-    guardarArbol(file, root->left);
-    guardarArbol(file, root->right);
-
-    
-
-}
-*/
-
 int esPrimera2 = 1;
+int cont = 0;
 void guardarArbol(FILE* file, MinHeapNode* root) {
     if (esPrimera2) { 
         fprintf(file, "#ifndef HUFFMAN_TREE_H\n#define HUFFMAN_TREE_H\n\n");
-        fprintf(file, "typedef struct TreeNode {\n    char symbol;\n   } TreeNode;\n\n");
-        fprintf(file, "const TreeNode huffmanTreeNodes[] = {\n");
+        fprintf(file, "const unsigned char huffmanTreeNodes[] = {\n");
         esPrimera2 = 0;
     }
 
     if (root == NULL) return;
     
     if (isLeaf(root)) {
-        fprintf(file, "    {'0x%02X'}, \n", root->data);
+        //printf("Almacenando hoja en índice %d: símbolo = 0x%02X\n", cont, root->data);
+        fprintf(file, "[%d] = 0x%02X, \n", cont, root->data);
     } else { 
-        fprintf(file, "    {'$'}, \n");
+        //printf("Almacenando nodo interno en índice %d: símbolo = '$'\n", cont);
+        fprintf(file, "[%d] = '$', \n", cont);
     }
+
+    cont++; 
 
     guardarArbol(file, root->left);
     guardarArbol(file, root->right);
 }
 
+
+int esPrimera3 = 1;
+void guardarArbolFuncionePorfavor(MinHeapNode* root, int direccion, int nivel) {
+    if (root == NULL) return;
+    if (esPrimera3) {
+        Arbol[0] = root->data;
+        esPrimera3 = 0;
+    }
+    if (direccion == 0) {
+        Arbol[(nivel * 2) + 1] = root->data;
+    }
+    else{
+        Arbol[(nivel * 2) + 2] = root->data;
+    }
+    
+    guardarArbolFuncionePorfavor(root->left, 1, nivel + 1);
+    guardarArbolFuncionePorfavor(root->right, 0, nivel + 1);
+    
+}
+
+void printArbol(FILE* file) {
+    fprintf(file, "#ifndef HUFFMAN_TREE_H\n#define HUFFMAN_TREE_H\n\n");
+    fprintf(file, "const unsigned char huffmanTreeNodes[] = {\n");
+
+
+    for (int i = 0; i < 1000; i++) {
+        if (Arbol[i] == '\0') {
+            
+        } else {
+            if (Arbol[i] == '$') {
+                fprintf(file, "'$', \n");
+            } else {
+                fprintf(file, "0x%02X, \n", Arbol[i]);
+            }
+        }
+        
+    }
+}
+
+void printTreePreOrder(MinHeapNode* root, int level) {
+    if (root == NULL) return;
+    printf("Nivel %d: símbolo = %c, frecuencia = %d\n", level, root->data, root->frequency);
+    printTreePreOrder(root->left, level + 1);
+    printTreePreOrder(root->right, level + 1);
+}
+
 void HuffmanCodes(int size, FILE *HUFFMAN, FILE *HuffmanTree) {  
     MinHeapNode* root = buildHuffmanTree(size); 
 
-  
+    guardarArbolFuncionePorfavor(root, 0, 0);
+    
     // El tamaño de este array está sujeto a la altura del árbol, por lo que hay que calcular más o menos cual sería un número al que nunca llegaría
     int arr[300], top = 0; 
     
-    guardarArbol(HuffmanTree, root);
+
+
+    //guardarArbol(HuffmanTree, root);
     tablaHuffman(HUFFMAN, root, arr, top);
 
     fprintf(HUFFMAN, "#ifndef HUFFMAN_CODES_H\n#define HUFFMAN_CODES_H\n\n");
@@ -309,6 +363,8 @@ int main(int argc, char* argv[]){
     for2();
     
     HuffmanCodes(size,HUFFMAN_CODES, HUFFMAN_TREE);
+
+    printArbol(HUFFMAN_TREE);
 
     fprintf(HUFFMAN_TREE, "};\n\n#endif\n");
 

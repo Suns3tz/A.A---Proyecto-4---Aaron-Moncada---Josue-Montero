@@ -67,7 +67,7 @@ void Compress(FILE* inFile, FILE* outFile) {
     }
 
     if (bitCount > 0) {
-        bitBuffer <<= (8 - bitCount); 
+        //bitBuffer <<= (8 - bitCount); 
         fputc(bitBuffer, outFile);
     }
 }
