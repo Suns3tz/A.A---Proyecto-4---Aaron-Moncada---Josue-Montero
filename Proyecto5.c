@@ -15,74 +15,6 @@ long readHeader3Byte(FILE* archivo) {
     return (byte1 << 16) | (byte2 << 8) | byte3;
 }
 
-/*
-void Decompress(FILE* inFile, FILE* outFile, long originalSize) {
-    int currentIndex = 0;
-    int bitBuffer;
-    int bitsLeft = 0;
-    long bytesWritten = 0;
-    int huffmanTreeSize = sizeof(huffmanTreeNodes) / sizeof(huffmanTreeNodes[0]);
-
-    while (bytesWritten < originalSize) {
-        if (bitsLeft == 0) {
-            bitBuffer = fgetc(inFile);
-            bitsLeft = 8;
-        }
-
-        int bit = (bitBuffer >> 7) & 1;
-        bitBuffer <<= 1;
-        bitsLeft--;
-
-        if (bit == 0) {
-            currentIndex = 2 * currentIndex + 1;
-        } else {
-            currentIndex = 2 * currentIndex + 2;
-        }
-
-        if (currentIndex >= huffmanTreeSize) {
-            fprintf(stderr, "Error: Índice fuera de rango en el árbol de Huffman\n");
-            break;
-        }
-
-        if (huffmanTreeNodes[currentIndex] != '$') {
-            fputc(huffmanTreeNodes[currentIndex], outFile);
-            bytesWritten++;
-            currentIndex = 0;
-        }
-    }
-}
-*/
-
-/*
-MinHeapNode* crearNodo(unsigned char data) {
-    MinHeapNode* nodo = (MinHeapNode*)malloc(sizeof(MinHeapNode));
-    nodo->data = data;
-    nodo->left = nodo->right = NULL;
-    return nodo;
-}
-
-MinHeapNode* reconstruirArbol(const unsigned char* arr, int* index, int size) {
-    if (*index >= size) return NULL;
-
-    unsigned char simbolo = arr[*index];
-    (*index)++;
-
-    MinHeapNode* nodo = crearNodo(simbolo);
-    printf("Nodo creado: %c (index: %d)\n", simbolo, *index - 1);
-
-    if (simbolo == '$') { // Nodo interno
-        nodo->left = reconstruirArbol(arr, index, size);
-        nodo->right = reconstruirArbol(arr, index, size);
-        printf("Nodo interno: %c -> left: %c, right: %c\n", 
-               simbolo, 
-               nodo->left ? nodo->left->data : 'N', 
-               nodo->right ? nodo->right->data : 'N');
-    }
-
-    return nodo;
-}
-*/
-
 MinHeapNode* crearNodo(unsigned char data) {
     MinHeapNode* nodo = (MinHeapNode*)malloc(sizeof(MinHeapNode));
     nodo->data = data;
@@ -114,8 +46,7 @@ void Decompress(FILE* inFile, FILE* outFile, long originalSize, MinHeapNode* roo
     while (bytesWritten < originalSize) {
         if (bitsLeft == 0) {
             bitBuffer = fgetc(inFile); 
-            bitsLeft = 8;
-            printf("Nuevo byte leído: 0x%X\n", bitBuffer);  
+            bitsLeft = 8; 
         }
 
         
@@ -140,11 +71,9 @@ void Decompress(FILE* inFile, FILE* outFile, long originalSize, MinHeapNode* roo
 
         
         if (currentNode->left == NULL && currentNode->right == NULL) {
-            printf("Símbolo encontrado: %c\n", currentNode->data);
             fputc(currentNode->data, outFile);
             bytesWritten++;
             currentNode = root;  
-            printf("Bytes escritos hasta ahora: %ld\n", bytesWritten);
         }
     }
 
@@ -166,7 +95,6 @@ int main(int argc, char* argv[]) {
 
     
     int index = 0;
-    //MinHeapNode* huffmanTreeRoot = reconstruirArbol(huffmanTreeNodes, &index, sizeof(huffmanTreeNodes));
     MinHeapNode* huffmanTreeRoot = reconstruirArbol(huffmanTreeNodes, huffmanTreeChildren, 0);
 
     char decompressedFileName[1024];
